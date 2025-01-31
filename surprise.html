@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Ping Pong Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid white;
+        }
+        #message {
+            display: none;
+            font-size: 24px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        #startButton, #retryButton, #viewMessageButton {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #viewMessageButton {
+            display: none; /* Hidden initially */
+        }
+        #customMessage {
+            display: none; 
+            margin-top: 20px; 
+            text-align: center;
+        }
+        #customImage {
+            height="200"
+    </style>
+</head>
+<body>
+    <button id="startButton">Start Game</button>
+    <canvas id="pong" width="600" height="400" style="display: none;"></canvas>
+    <div id="message">Congratulations! You've won the game!</div>
+    <button id="retryButton" style="display: none;">Retry</button>
+    <button id="viewMessageButton">View Surprise?</button>
+    <div id="customMessage" style="display: none;">
+       Happy birthday Adrian! not sure if this work but i just wanna say that I love you  	
+	   even tho we only knew each other for a few days, I already and surely glad i'm dating you. 
+	   You might think i wasted my time doing this but i regret nothing if it actually made you
+	   happy and smile.I really do love you soo soo much darling, you're the most dependable, sweet, caring,
+	   handsome, charming, smart,funny person i know. 	which so non the less i'm proud of myself to be called yours, 
+	   i'm more proud of you for ur sucess and i'm sure you'll acheive whatever you may want in the future. Do remember      
+	   that i love u as you Adrian, not because of status or anything, i see you as my everything and more so never doubt youself. 
+	   For last i just wish you can enjoy your special day      treat youself with something you like, and hopefully I can earn your 
+	   full trust too,don't rush it please i can wait as long as time will take.<3  
+        <img id="customImage" src="kissing kitty.gif" alt="Custom Image" /> 
+    </div>
+    <audio id="backgroundMusic" src="That night.mp3" preload="auto"></audio>
+
+    <script>
+        const canvas = document.getElementById('pong');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const retryButton = document.getElementById('retryButton');
+        const viewMessageButton = document.getElementById('viewMessageButton');
+        const messageDiv = document.getElementById('message');
+        const customMessageDiv = document.getElementById('customMessage');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        let gameInterval;
+
+        const paddleWidth = 10, paddleHeight = 100;
+        const ballSize = 10;
+
+        let player = { x: 0, y: canvas.height / 2 - paddleHeight / 2, score: 0 };
+        let computer = { x: canvas.width - paddleWidth, y: canvas.height / 2 - paddleHeight / 2, score: 0 };
+        let ball = { x: canvas.width / 2, y: canvas.height / 2, speedX: 5, speedY: 5 };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x, player.y, paddleWidth, paddleHeight);
+            ctx.fillRect(computer.x, computer.y, paddleWidth, paddleHeight);
+            ctx.fillRect(ball.x, ball.y, ballSize, ballSize);
+        }
+
+        function update() {
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Ball collision with top and bottom walls
+            if (ball.y + ballSize > canvas.height || ball.y < 0) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Player paddle collision
+            if (ball.x < player.x + paddleWidth && ball.y > player.y && ball.y < player.y + paddleHeight) {
+                ball.speedX = -ball.speedX;
+                ball.x = player.x + paddleWidth; // Prevent sticking
+                player.score++;
+            }
+
+            // Computer paddle collision
+            if (ball.x + ballSize > computer.x && ball.y > computer.y && ball.y < computer.y + paddleHeight) {
+                ball.speedX = -ball.speedX;
+                ball.x = computer.x - ballSize; // Prevent sticking
+                computer.score++;
+            }
+
+            // Check for scoring
+            if (ball.x < 0) {
+                endGame(false); // Player loses
+            } else if (ball.x + ballSize > canvas.width) {
+                endGame(true); // Player wins
+            }
+
+            // Move computer paddle
+            if (ball.y < computer.y) {
+                computer.y -= 4; // Move up
+            } else if (ball.y + ballSize > computer.y + paddleHeight) {
+                computer.y += 4; // Move down
+            }
+
+            // Prevent computer paddle from going out of bounds
+            if (computer.y < 0) computer.y = 0;
+            if (computer.y + paddleHeight > canvas.height) computer.y = canvas.height - paddleHeight;
+        }
+
+        function endGame(playerWon) {
+            if (playerWon) {
+                messageDiv.innerText = "Congratulations! You've won the game!";
+                viewMessageButton.style.display = 'block'; // Show the message button
+                retryButton.style.display = 'none'; // Hide the retry button
+            } else {
+                messageDiv.innerText = "You lost! Try again!";
+                viewMessageButton.style.display = 'none'; // Hide the message button
+                retryButton.style.display = 'block'; // Show the retry button
+            }
+            messageDiv.style.display = 'block'; // Show the message
+            clearInterval(gameInterval);
+        }
+
+        document.addEventListener('mousemove', (event) => {
+            if (canvas.style.display === 'block') {
+                const rect = canvas.getBoundingClientRect();
+                const mouseY = event.clientY - rect.top;
+                player.y = mouseY - paddleHeight / 2;
+                if (player.y < 0) player.y = 0;
+                if (player.y + paddleHeight > canvas.height) player.y = canvas.height - paddleHeight;
+            }
+        });
+
+        function gameLoop() {
+            draw();
+            update();
+        }
+
+        startButton.addEventListener('click', () => {
+            startButton.style.display = 'none';
+            retryButton.style.display = 'none'; // Hide retry button
+            canvas.style.display = 'block';
+            messageDiv.style.display = 'none'; // Hide message on game start
+            viewMessageButton.style.display = 'none'; // Hide message button on game start
+            customMessageDiv.style.display = 'none'; // Hide custom message on game start
+            resetGame();
+            gameInterval = setInterval(gameLoop, 1000 / 60);
+        });
+
+        retryButton.addEventListener('click', () => {
+            resetGame();
+            startButton.click(); // Start the game again
+        });
+
+        viewMessageButton.addEventListener('click', () => {
+            customMessageDiv.style.display = 'block'; // Show the custom message
+            backgroundMusic.play(); // Play the music
+        });
+
+        function resetGame() {
+            player.score = 0;
+            computer.score = 0;
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.speedX = 5;
+            ball.speedY = 5;
+        }
+    </script>
+</body>
+</html>
